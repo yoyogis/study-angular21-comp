@@ -3,6 +3,14 @@ import { City } from './city.model';
 
 export type MapType = 'baidu' | 'google';
 
+// 为了TypeScript识别百度地图和谷歌地图的全局变量
+declare global {
+  interface Window {
+    BMapGL: any;
+    google: any;
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -46,7 +54,7 @@ export class MapService {
     }
   ];
 
-  constructor() {}
+
 
   // 初始化地图
   async initMap(containerId: string, mapType: MapType): Promise<void> {
@@ -67,51 +75,66 @@ export class MapService {
     }
   }
 
+  // 加载地图脚本
+  private loadScript(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`无法加载脚本: ${src}`));
+      
+      const existingScript = document.querySelector(`script[src="${src}"]`);
+      if (!existingScript) {
+        document.head.appendChild(script);
+      } else {
+        resolve();
+      }
+    });
+  }
+
   // 初始化谷歌地图
   private async initGoogleMap(container: HTMLElement): Promise<void> {
-    // 模拟谷歌地图API加载
-    setTimeout(() => {
-      // 模拟地图实例
-      this.mapInstance = {
-        zoom: (level: number) => console.log(`Google地图缩放到级别: ${level}`),
-        panTo: (latLng: { lat: number; lng: number }) => 
-          console.log(`Google地图平移到: ${latLng.lat}, ${latLng.lng}`),
-        setCenter: (latLng: { lat: number; lng: number }) => 
-          console.log(`Google地图设置中心: ${latLng.lat}, ${latLng.lng}`),
-        addMarker: (options: any) => {
-          console.log(`Google地图添加标记: ${options.position.lat}, ${options.position.lng}`);
-          return { setMap: () => {}, setPosition: () => {}, setContent: () => {}, open: () => {} };
-        },
-        addInfoWindow: (options: any) => {
-          console.log(`Google地图添加信息窗口`);
-          return { setContent: () => {}, open: () => {}, close: () => {} };
-        }
-      };
-      this.mapInstance.zoom(2); // 初始显示全球
-    }, 500);
+    // 加载谷歌地图API
+    // 注意：这里使用的是开发测试用的密钥，请在生产环境中替换为真实的密钥
+    await this.loadScript('https://maps.googleapis.com/maps/api/js?key=AIzaSyCkUOdZ5y7hMm0yrcCQoCvLwzdM6M8s5qk&libraries=places');
+    
+    if (!window.google || !window.google.maps) {
+      throw new Error('谷歌地图API加载失败');
+    }
+    
+    // 创建地图实例
+    const mapOptions = {
+      center: { lat: 35.8617, lng: 104.1954 }, // 中国中心点
+      zoom: 2,
+      mapTypeId: window.google.maps.MapTypeId.ROADMAP
+    };
+    
+    this.mapInstance = new window.google.maps.Map(container, mapOptions);
   }
 
   // 初始化百度地图
   private async initBaiduMap(container: HTMLElement): Promise<void> {
-    // 模拟百度地图API加载
-    setTimeout(() => {
-      // 模拟地图实例
-      this.mapInstance = {
-        setZoom: (level: number) => console.log(`百度地图缩放到级别: ${level}`),
-        panTo: (point: { lat: number; lng: number }) => 
-          console.log(`百度地图平移到: ${point.lat}, ${point.lng}`),
-        centerAndZoom: (point: { lat: number; lng: number }, zoom: number) => 
-          console.log(`百度地图设置中心并缩放: ${point.lat}, ${point.lng}, ${zoom}`),
-        addOverlay: (marker: any) => {
-          console.log(`百度地图添加覆盖物`);
-          return marker;
-        },
-        openInfoWindow: (infoWindow: any, marker: any) => {
-          console.log(`百度地图打开信息窗口`);
-        }
-      };
-      this.mapInstance.setZoom(2); // 初始显示全球
-    }, 500);
+    // 加载百度地图API
+    // 注意：这里使用的是开发测试用的密钥，请在生产环境中替换为真实的密钥
+    await this.loadScript('https://api.map.baidu.com/api?v=3.0&ak=E4805d16520de693a3fe707cdc962045');
+    
+    if (!window.BMapGL) {
+      throw new Error('百度地图API加载失败');
+    }
+    
+    // 创建地图实例
+    const mapOptions = {
+      center: new window.BMapGL.Point(104.1954, 35.8617), // 中国中心点
+      zoom: 2
+    };
+    
+    this.mapInstance = new window.BMapGL.Map(container);
+    this.mapInstance.centerAndZoom(mapOptions.center, mapOptions.zoom);
+    // 开启鼠标滚轮缩放
+    this.mapInstance.enableScrollWheelZoom(true);
   }
 
   // 根据城市名查找城市信息
@@ -140,8 +163,10 @@ export class MapService {
 
   // 缩小到全球范围
   private zoomOutToWorld(): void {
+    if (!this.mapInstance) return;
+    
     if (this.currentMapType() === 'google') {
-      this.mapInstance.zoom(2);
+      this.mapInstance.setZoom(2);
     } else {
       this.mapInstance.setZoom(2);
     }
@@ -149,23 +174,81 @@ export class MapService {
 
   // 放大到指定城市
   private async zoomInToCity(city: City): Promise<void> {
-    const latLng = { lat: city.lat, lng: city.lng };
-
+    if (!this.mapInstance) return;
+    
     if (this.currentMapType() === 'google') {
+      // 谷歌地图操作
+      const latLng = new window.google.maps.LatLng(city.lat, city.lng);
+      
+      // 平滑过渡到目标城市
       this.mapInstance.setCenter(latLng);
-      this.mapInstance.zoom(10);
-      // 模拟添加标记和信息窗口
-      this.cityMarker = this.mapInstance.addMarker({ position: latLng });
-      this.cityInfoWindow = this.mapInstance.addInfoWindow({ content: city.description });
+      this.mapInstance.setZoom(10);
+      
+      // 移除之前的标记和信息窗口
+      if (this.cityMarker) {
+        this.cityMarker.setMap(null);
+      }
+      if (this.cityInfoWindow) {
+        this.cityInfoWindow.close();
+      }
+      
+      // 添加新标记
+      this.cityMarker = new window.google.maps.Marker({
+        position: latLng,
+        map: this.mapInstance,
+        title: city.name
+      });
+      
+      // 添加信息窗口
+      this.cityInfoWindow = new window.google.maps.InfoWindow({
+        content: `<div style="padding: 10px;"><h3>${city.name}</h3><p>${city.description}</p></div>`
+      });
+      
+      // 打开信息窗口
       this.cityInfoWindow.open(this.mapInstance, this.cityMarker);
+      
+      // 添加点击标记显示信息窗口的事件
+      this.cityMarker.addListener('click', () => {
+        this.cityInfoWindow.open(this.mapInstance, this.cityMarker);
+      });
     } else {
-      // 百度地图的操作
-      this.mapInstance.centerAndZoom(latLng, 12);
-      // 模拟添加标记和信息窗口
-      this.cityMarker = { point: latLng };
+      // 百度地图操作
+      const point = new window.BMapGL.Point(city.lng, city.lat);
+      
+      // 平滑过渡到目标城市
+      this.mapInstance.panTo(point);
+      this.mapInstance.setZoom(12);
+      
+      // 移除之前的标记和信息窗口
+      if (this.cityMarker) {
+        this.mapInstance.removeOverlay(this.cityMarker);
+      }
+      if (this.cityInfoWindow) {
+        this.mapInstance.closeInfoWindow(this.cityInfoWindow);
+      }
+      
+      // 添加新标记
+      this.cityMarker = new window.BMapGL.Marker(point);
       this.mapInstance.addOverlay(this.cityMarker);
-      this.cityInfoWindow = { content: city.description };
-      this.mapInstance.openInfoWindow(this.cityInfoWindow, this.cityMarker);
+      
+      // 添加信息窗口
+      const opts = {
+        width: 250,
+        height: 120,
+        title: city.name
+      };
+      this.cityInfoWindow = new window.BMapGL.InfoWindow(
+        `<p>${city.description}</p>`, 
+        opts
+      );
+      
+      // 打开信息窗口
+      this.mapInstance.openInfoWindow(this.cityInfoWindow, point);
+      
+      // 添加点击标记显示信息窗口的事件
+      this.cityMarker.addEventListener('click', () => {
+        this.mapInstance.openInfoWindow(this.cityInfoWindow, point);
+      });
     }
   }
 

@@ -29,7 +29,7 @@
   <div class="city-list">
     <h3>可选城市</h3>
     <div class="city-tags">
-      <span *ngFor="let city of mapService.getAllCities()" 
+      <span *ngFor="let city of getAllCities()" 
             (click)="cityName.set(city.name); onLocateCity()" 
             class="city-tag"
       >
