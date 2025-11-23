@@ -1,0 +1,166 @@
+.city-map-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.input-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.city-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.locate-btn, .switch-map-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.locate-btn:hover:not(:disabled), .switch-map-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.locate-btn:disabled, .switch-map-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.map-container {
+  width: 100%;
+  height: 500px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 确保地图容器在初始化时有合适的样式 */
+.map-container::before {
+  content: '地图加载中...';
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #f8f9fa;
+  color: #666;
+  font-size: 18px;
+  z-index: 1;
+}
+
+/* 当地图加载后隐藏加载提示 */
+.map-container.loaded::before {
+  display: none;
+}
+
+.city-list {
+  margin-top: 20px;
+}
+
+.city-list h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.city-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.city-tag {
+  padding: 8px 16px;
+  background-color: #e9ecef;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.city-tag:hover {
+  background-color: #dee2e6;
+}
+
+/* 错误弹窗样式 */
+.error-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.error-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.error-content p {
+  color: #dc3545;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.close-btn {
+  padding: 8px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.close-btn:hover {
+  background-color: #0056b3;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .input-section {
+    flex-direction: column;
+  }
+  
+  .city-input, .locate-btn, .switch-map-btn {
+    width: 100%;
+  }
+  
+  .map-container {
+    height: 300px;
+  }
+}

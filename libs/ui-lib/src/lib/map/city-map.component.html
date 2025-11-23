@@ -1,0 +1,48 @@
+<div class="city-map-container">
+  <h2>城市地图定位</h2>
+  
+  <div class="input-section">
+    <input 
+      type="text" 
+      [(ngModel)]="cityName" 
+      placeholder="请输入城市名称" 
+      class="city-input"
+    />
+    <button 
+      (click)="onLocateCity()" 
+      [disabled]="isLoading()" 
+      class="locate-btn"
+    >
+      {{ isLoading() ? '定位中...' : '定位城市' }}
+    </button>
+    <button 
+      (click)="onSwitchMapType()" 
+      [disabled]="isLoading()" 
+      class="switch-map-btn"
+    >
+      切换到{{ currentMapType() === 'google' ? '百度' : '谷歌' }}地图
+    </button>
+  </div>
+  
+  <div id="map-container" class="map-container"></div>
+  
+  <div class="city-list">
+    <h3>可选城市</h3>
+    <div class="city-tags">
+      <span *ngFor="let city of getAllCities()" 
+            (click)="cityName.set(city.name); onLocateCity()" 
+            class="city-tag"
+      >
+        {{ city.name }}
+      </span>
+    </div>
+  </div>
+  
+  <!-- 错误提示弹窗 -->
+  <div *ngIf="errorMessage()" class="error-modal">
+    <div class="error-content">
+      <p>{{ errorMessage() }}</p>
+      <button (click)="closeError()" class="close-btn">确定</button>
+    </div>
+  </div>
+</div>
