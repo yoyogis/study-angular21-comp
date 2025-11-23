@@ -8,6 +8,7 @@ declare global {
   interface Window {
     BMapGL: any;
     google: any;
+    baiduMapLoaded?: () => void;
   }
 }
 
@@ -78,15 +79,35 @@ export class MapService {
   // 加载地图脚本
   private loadScript(src: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      // 检查是否是百度地图API
+      const isBaiduMap = src.includes('api.map.baidu.com');
+      
       const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.defer = true;
       
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`无法加载脚本: ${src}`));
+      // 为百度地图API添加回调参数
+      if (isBaiduMap && !src.includes('callback=')) {
+        window['baiduMapLoaded'] = () => {
+          resolve();
+          // 清理全局回调函数
+          delete window['baiduMapLoaded'];
+        };
+        script.src = `${src}&callback=baiduMapLoaded`;
+      } else {
+        script.src = src;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+      }
       
-      const existingScript = document.querySelector(`script[src="${src}"]`);
+      script.onerror = () => {
+        // 清理全局回调函数
+        if (isBaiduMap) {
+          delete window['baiduMapLoaded'];
+        }
+        reject(new Error(`无法加载脚本: ${src}`));
+      };
+      
+      const existingScript = document.querySelector(`script[src="${script.src}"]`);
       if (!existingScript) {
         document.head.appendChild(script);
       } else {
